@@ -1,3 +1,28 @@
+HTMLImageElement.prototype.getCanvasFromImage = function () {
+  const canvas = document.createElement('canvas');
+  // canvas.width = this.width;
+  // canvas.height = this.height;
+  canvas.width = this.naturalWidth;
+  canvas.height = this.naturalHeight;
+
+  //let dpi = window.devicePixelRatio; // ie: 0.75
+  // let dpi = 200;
+  // let scaleFactor = dpi / 96;
+  let scaleFactor = 1;
+  // Set up CSS size.
+  canvas.style.width = canvas.style.width || canvas.width + 'px';
+  canvas.style.height = canvas.style.height || canvas.height + 'px';
+
+  // Resize canvas and scale future draws.
+  canvas.width = Math.ceil(canvas.width * scaleFactor);
+  canvas.height = Math.ceil(canvas.height * scaleFactor);
+
+  const ctx = canvas.getContext('2d');
+  ctx.scale(scaleFactor, scaleFactor);
+  ctx.drawImage(this, 0, 0);
+  return canvas;
+};
+
 const APP = {
   file: null,
   response: null,
@@ -23,20 +48,24 @@ const APP = {
       .addEventListener('click', APP.createResponseObject);
     //save the response in the Cache
     document
-      .getElementById('btnCache')
-      .addEventListener('click', APP.saveInCache);
+      .getElementById('btnPutResponseInCache')
+      .addEventListener('click', APP.putResponseInCache);
     //display current local file on the webpage
     document
-      .getElementById('btnDisplayLocal')
-      .addEventListener('click', APP.displayLocal);
+      .getElementById('btnDisplayCurrentLocalFile')
+      .addEventListener('click', APP.displayCurrentLocalFile);
     //display the last item from the cache on the page
     document
-      .getElementById('btnDisplayCache')
-      .addEventListener('click', APP.displayCache);
-    //extract the image from the canvas and display on the page
+      .getElementById('btnDisplayLastFileFromCache')
+      .addEventListener('click', APP.displayLastFileFromCache);
+    // Display and Cache Canvas Image
     document
-      .getElementById('btnDisplayCanvas')
-      .addEventListener('click', APP.displayAndCacheCanvasImage);
+      .getElementById('btnCacheAndDisplayCanvasImage')
+      .addEventListener('click', APP.cacheAndDisplayCanvasImage);
+    //Draw a blue circle on the image from the cache
+    document
+      .getElementById('drawBlueCircleOnOutputImg')
+      .addEventListener('click', APP.drawBlueCircleOnOutputImg);
     //generate a JSON(text) file and prompt the user to download and save the file
     document
       .getElementById('btnGenAndSave')
@@ -49,6 +78,10 @@ const APP = {
     document
       .getElementById('btnSaveFileImage')
       .addEventListener('click', APP.saveFileImage);
+    // Save OutputIMG to File
+    document
+      .getElementById('btnSaveOutputImgToFile')
+      .addEventListener('click', APP.saveOutputImgToFile);
   },
   ///////////////////////////////////////////////////////
   drawCircleOnCanvas: () => {
@@ -113,7 +146,7 @@ const APP = {
     }
   },
   ///////////////////////////////////////////////////////
-  saveInCache: (ev) => {
+  putResponseInCache: (ev) => {
     if (APP.response) {
       //save the current Response object in the Cache using the Cache API
       caches.open(APP.cacheName).then((cache) => {
@@ -128,7 +161,7 @@ const APP = {
     }
   },
   ///////////////////////////////////////////////////////
-  displayLocal: (ev) => {
+  displayCurrentLocalFile: (ev) => {
     //display APP.file on the webpage
     console.log(APP.file);
     if (APP.file) {
@@ -154,7 +187,7 @@ const APP = {
     }
   },
   ///////////////////////////////////////////////////////
-  displayCache: async (ev) => {
+  displayLastFileFromCache: async (ev) => {
     //display last item from cache
     if (!APP.cache) {
       APP.cache = await caches.open(APP.cacheName);
@@ -183,47 +216,45 @@ const APP = {
     }
   },
   ///////////////////////////////////////////////////////
-  displayAndCacheCanvasImage: (ev) => {
+  cacheAndDisplayCanvasImage: (ev) => {
     //extract the image from the Canvas, save it in the cache
     //and display it on the screen
-    // APP.canvas.toBlob(
-    //   async (buffer) => {
-    // let url = URL.createObjectURL(APP.file);
-    // document.getElementById(
-    //   'outputIMG'
-    // ).innerHTML = `<img src="${url}" alt="image from ..."/>`;
+    APP.canvas.toBlob(
+      async (buffer) => {
+        //handle the buffer from the canvas
+        let file = new File([buffer], 'canvasImage.jpg', {
+          type: 'image/jpeg',
+        });
+        let response = new Response(file, {
+          status: 200,
+          statusText: 'ok',
+          headers: {
+            'content-type': file.type,
+            'content-length': file.size,
+            'X-file': file.name,
+          },
+        });
+        let url = new URL(`/${Date.now()}/${file.name}`, location.origin);
+        if (!APP.cache) {
+          APP.cache = await caches.open(APP.cacheName);
+        }
+        APP.cache.put(url, response);
+        let blobUrl = URL.createObjectURL(file);
+        document.getElementById(
+          'outputIMG'
+        ).innerHTML = `<img src="${blobUrl}" alt="image from ..."/>`;
+      },
+      'image/jpeg',
+      1
+    );
+  },
+  ///////////////////////////////////////////////////////
+  drawBlueCircleOnOutputImg: (ev) => {
 
-    // //handle the buffer from the canvas
-    // let file = new File([buffer
-    // ], 'canvasImage.jpg',
-    //   {
-    //     type: 'image/jpeg',
-    //   });
-    // let response = new Response(file,
-    //   {
-    //     status: 200,
-    //     statusText: 'ok',
-    //     headers: {
-    //       'content-type': file.type,
-    //       'content-length': file.size,
-    //       'X-file': file.name,
-    //     },
-    //   });
-    // let url = new URL(`/${Date.now()
-    //   }/${file.name
-    //   }`, location.origin);
-    // if (!APP.cache) {
-    //   APP.cache = await caches.open(APP.cacheName);
-    // }
-    // APP.cache.put(url, response);
-    // let blobUrl = URL.createObjectURL(file);
-    // document.getElementById(
-    //   'outputIMG'
-    // ).innerHTML = `<img src="${blobUrl}" alt="image from ..."/>`;
-
-    let imageEl = document.getElementById('outputIMG');
-    let canvas = imageEl.src;
-    let ctx = image.getContext('2d');
+    let imageContainer = document.getElementById('outputIMG');
+    let imageEl = imageContainer.querySelector('img');
+    let canvas = imageEl.getCanvasFromImage();
+    let ctx = canvas.getContext('2d');
 
     ctx.beginPath();
     ctx.fillStyle = 'cornflowerblue';
@@ -235,10 +266,17 @@ const APP = {
       0, Math.PI * 2, false);
     ctx.fill();
 
-    //   },
-    //   'image/jpeg',
-    //   1
-    // );
+    ctx.beginPath();
+    ctx.fillStyle = 'red';
+    ctx.ellipse(
+      imageEl.naturalWidth / 2, imageEl.naturalHeight / 2,
+      imageEl.naturalWidth / 4, imageEl.naturalWidth / 4,
+      0,
+      0, Math.PI * 2, false);
+    ctx.fill();
+
+    imageEl.src = canvas.toDataURL('image/jpeg', 1);
+
   },
   ///////////////////////////////////////////////////////
   genAndSave: (ev) => {
@@ -302,10 +340,30 @@ const APP = {
     } else {
       console.log('no APP.file');
     }
-  }
+  },
+  ///////////////////////////////////////////////////
+  saveOutputImgToFile: (ev) => {
+    //save the image from the canvas
+    // let link = document.createElement('a');
+    let imageContainerEl = document.getElementById('outputIMG');
+    let imgEl = imageContainerEl.querySelector('img');
+    let link = document.getElementById('saveFileLink');
+    link.download = 'outputIMG.jpg';
+    link.href = imgEl.src;
+    link.click();
+  },
 };
 
 // Wait for dom to load and then run the init function
 // document.addEventListener('DOMContentLoaded', APP.init);
 
 window.addEventListener('load', APP.init)
+
+function getCanvasFromImage(image) {
+  const canvas = document.createElement('canvas');
+  canvas.width = image.width;
+  canvas.height = image.height;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(image, 0, 0);
+  return canvas;
+}
