@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <link rel="stylesheet" href="style.css" />
+  <script src="app.js" async defer></script>
+  <title>Handling Files in Web Apps</title>
+</head>
+
+<body>
+  <header>
+    <h1>Local, Generated, and Cached Files</h1>
+    <h2>Moving, Copying, and Saving</h2>
+  </header>
+  <main>
+    <h1>Handling Files in Web Apps</h1>
+    <h2>Current File: <span class="title"></span></h2>
+    <p class="formbox">
+      <label for="inputImage">Pick Image</label>
+      <input type="file" id="inputImage" accept="image/*,.png,.jpg,.jpeg,.gif,.webp" />
+    </p>
+    <p class="formbox">
+      <label for="inputJSON">Pick JSON</label>
+      <input type="file" id="inputJSON" accept="application/json,.json,text/json" />
+    </p>
+    <p id="actions">
+      <button id="btnResponse">Put the File in a Response Object</button>
+      <button id="btnCache">Put the Response in the Cache</button>
+      <button id="btnDisplayLocal">Display Current Local File</button>
+      <button id="btnDisplayCache">Display Last File from Cache</button>
+      <button id="btnGenAndSave">
+        Generate a JSON File and Save Locally
+      </button>
+      <button id="btnDisplayCanvas">Display and Cache Canvas Image</button>
+      <button id="btnSaveCanvasImage">Save Canvas Image as File</button>
+      <button id="btnSaveFileImage">Save File Image as File</button>
+    </p>
+    <p>
+      The canvas element:
+      <canvas id="canvas" width="200" height="200"></canvas>
+      Drawn after DOMContentLoaded.
+    </p>
+    <a id="saveFileLink"></a>
+
+    <pre id="outputJSON"></pre>
+    <p id="outputIMG">
+      <!-- images from local files or cache shown here -->
+    </p>
+  </main>
+  <footer>
+    <p>&copy; 2022</p>
+  </footer>
+</body>
+
+</html>
