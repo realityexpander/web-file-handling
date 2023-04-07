@@ -1,3 +1,10 @@
+// Image editing example:
+// https://www.geeksforgeeks.org/creating-a-simple-image-editor-using-javascript/
+// https://www.w3schools.com/tags/canvas_getimagedata.asp
+// https://stackoverflow.com/questions/67399203/get-a-canvas-object-from-an-img-element
+// https://stackoverflow.com/questions/14488849/higher-dpi-graphics-with-html5-canvas
+// https://www.tutorialrepublic.com/faq/how-to-get-original-image-size-in-javascript.php
+
 HTMLImageElement.prototype.getCanvasFromImage = function () {
   const canvas = document.createElement('canvas');
   // canvas.width = this.width;
